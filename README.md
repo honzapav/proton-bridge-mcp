@@ -88,6 +88,8 @@ export OP_PASSWORD_REF="op://Personal/Proton Bridge/password"
 
 Requires the [1Password CLI (`op`)](https://developer.1password.com/docs/cli/) to be installed and authenticated.
 
+If you have multiple 1Password accounts, set `OP_ACCOUNT` to the account ID or sign-in address for the account containing your Proton credentials. The `op` CLI reads this env var automatically.
+
 ### Option 4: ProtonPass
 
 ```json
@@ -124,6 +126,7 @@ Requires `pass-cli` to be installed and the `PROTON_PASS_PASSWORD` env var set.
 | `PROTON_BRIDGE_SMTP_PORT` | `1025` | SMTP port (reserved) |
 | `PROTON_BRIDGE_CONFIG` | `./config.json` | Path to config file |
 | `CREDENTIAL_PROVIDER` | `env` | `env`, `onepassword`, or `protonpass` |
+| `OP_ACCOUNT` | - | 1Password account ID or sign-in address (needed only with multiple accounts) |
 | `OP_USERNAME_REF` | - | 1Password secret reference for username |
 | `OP_PASSWORD_REF` | - | 1Password secret reference for password |
 | `PP_USERNAME_REF` | - | ProtonPass secret reference for username |
