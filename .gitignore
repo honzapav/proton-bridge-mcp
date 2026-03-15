@@ -3,3 +3,4 @@ dist/
 config.json
 .env
 *.tgz
+docs/superpowers/
