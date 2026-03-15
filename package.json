@@ -1,0 +1,33 @@
+{
+  "name": "proton-bridge-mcp",
+  "version": "1.0.0",
+  "description": "MCP server for Proton Mail via Proton Bridge",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "proton-bridge-mcp": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "start": "node dist/index.js",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.27.1",
+    "imapflow": "^1.2.13",
+    "nodemailer": "^8.0.2",
+    "postal-mime": "^2.7.3",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.0",
+    "@types/nodemailer": "^7.0.11",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.0"
+  }
+}
