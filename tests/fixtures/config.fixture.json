@@ -1,0 +1,17 @@
+{
+  "credentials": {
+    "provider": "env"
+  },
+  "imap": {
+    "host": "file-host",
+    "port": 1143,
+    "poolSize": 5,
+    "commandTimeout": 30000,
+    "acquireTimeout": 10000,
+    "idleTimeout": 300000
+  },
+  "smtp": {
+    "host": "127.0.0.1",
+    "port": 1025
+  }
+}

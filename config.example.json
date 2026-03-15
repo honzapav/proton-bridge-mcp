@@ -1,0 +1,25 @@
+{
+  "credentials": {
+    "provider": "env",
+    "onepassword": {
+      "username_ref": "op://Personal/Proton Bridge/username",
+      "password_ref": "op://Personal/Proton Bridge/password"
+    },
+    "protonpass": {
+      "username_ref": "proton/bridge/username",
+      "password_ref": "proton/bridge/password"
+    }
+  },
+  "imap": {
+    "host": "127.0.0.1",
+    "port": 1143,
+    "poolSize": 3,
+    "commandTimeout": 30000,
+    "acquireTimeout": 10000,
+    "idleTimeout": 300000
+  },
+  "smtp": {
+    "host": "127.0.0.1",
+    "port": 1025
+  }
+}
