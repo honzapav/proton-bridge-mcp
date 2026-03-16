@@ -13,7 +13,7 @@ const AttachmentSchema = z.object({
 export function registerComposingTools(server: McpServer, draftService: DraftService): void {
   server.tool(
     'save_draft',
-    'Save an email as a draft.',
+    'Save an email as a draft. For replies: first call get_email_headers on the original message to obtain its messageId and references, then set in_reply_to and references so the reply is threaded correctly.',
     {
       to: z.array(z.string()),
       subject: z.string(),
@@ -22,8 +22,12 @@ export function registerComposingTools(server: McpServer, draftService: DraftSer
       from: z.string().optional(),
       cc: z.array(z.string()).optional(),
       bcc: z.array(z.string()).optional(),
-      in_reply_to: z.string().optional(),
-      references: z.array(z.string()).optional(),
+      in_reply_to: z.string().optional().describe(
+        'For replies: the Message-ID of the email being replied to (from get_email_headers). Required for proper threading.',
+      ),
+      references: z.array(z.string()).optional().describe(
+        'For replies: array of Message-IDs forming the thread chain. Take the references from get_email_headers (split by space), append the original messageId. Required for proper threading.',
+      ),
       attachments: z.array(AttachmentSchema).optional(),
     },
     async ({ to, subject, body, html, from, cc, bcc, in_reply_to, references, attachments }): Promise<CallToolResult> => {

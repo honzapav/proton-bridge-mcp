@@ -89,8 +89,8 @@ export class DraftService {
       from: input.from ?? (existing.from[0] ?? undefined),
       cc: input.cc ?? existing.cc,
       bcc: input.bcc,
-      inReplyTo: input.inReplyTo,
-      references: input.references,
+      inReplyTo: input.inReplyTo ?? existing.headers['in-reply-to'],
+      references: input.references ?? existing.headers['references'],
       attachments: input.attachments,
     };
 

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { DraftService } from '../../src/services/draft.service.js';
+import { buildRfc822, DraftService } from '../../src/services/draft.service.js';
 import type { DraftInput } from '../../src/types.js';
 
 function makeClient() {
@@ -134,5 +134,110 @@ describe('DraftService', () => {
         expect.arrayContaining(['\\Draft']),
       );
     });
+
+    it('preserves threading headers from existing draft when not provided in update', async () => {
+      messageService.getEmail.mockResolvedValueOnce({
+        uid: 1,
+        subject: 'Re: Thread test',
+        from: [{ address: 'user@example.com' }],
+        to: [{ address: 'recipient@example.com' }],
+        cc: [],
+        date: '2024-01-15T10:00:00Z',
+        flags: ['\\Draft'],
+        hasAttachments: false,
+        textBody: 'Original reply body',
+        htmlBody: '',
+        headers: {
+          'in-reply-to': '<parent@example.com>',
+          'references': '<root@example.com> <parent@example.com>',
+        },
+        attachments: [],
+      });
+
+      const saveSpy = vi.spyOn(service, 'saveDraft').mockResolvedValueOnce();
+      await service.updateDraft(1, {
+        to: [{ address: 'recipient@example.com' }],
+        subject: 'Re: Thread test',
+        body: 'Updated reply body',
+      });
+
+      const merged = saveSpy.mock.calls[0]![0];
+      expect(merged.inReplyTo).toBe('<parent@example.com>');
+      expect(merged.references).toBe('<root@example.com> <parent@example.com>');
+    });
+
+    it('uses explicit threading headers over existing ones', async () => {
+      messageService.getEmail.mockResolvedValueOnce({
+        uid: 1,
+        subject: 'Re: Thread test',
+        from: [{ address: 'user@example.com' }],
+        to: [{ address: 'recipient@example.com' }],
+        cc: [],
+        date: '2024-01-15T10:00:00Z',
+        flags: ['\\Draft'],
+        hasAttachments: false,
+        textBody: 'Body',
+        htmlBody: '',
+        headers: {
+          'in-reply-to': '<old@example.com>',
+          'references': '<old@example.com>',
+        },
+        attachments: [],
+      });
+
+      const saveSpy = vi.spyOn(service, 'saveDraft').mockResolvedValueOnce();
+      await service.updateDraft(1, {
+        to: [{ address: 'recipient@example.com' }],
+        subject: 'Re: Thread test',
+        body: 'Body',
+        inReplyTo: '<new@example.com>',
+        references: '<new@example.com>',
+      });
+
+      const merged = saveSpy.mock.calls[0]![0];
+      expect(merged.inReplyTo).toBe('<new@example.com>');
+      expect(merged.references).toBe('<new@example.com>');
+    });
+  });
+});
+
+function parseMimeHeaders(buf: Buffer): Record<string, string> {
+  const raw = buf.toString('utf-8');
+  const headerBlock = raw.split(/\r?\n\r?\n/)[0] ?? '';
+  const unfolded = headerBlock.replace(/\r?\n[ \t]+/g, ' ');
+  const headers: Record<string, string> = {};
+  for (const line of unfolded.split(/\r?\n/)) {
+    const idx = line.indexOf(':');
+    if (idx > 0) {
+      headers[line.slice(0, idx).toLowerCase().trim()] = line.slice(idx + 1).trim();
+    }
+  }
+  return headers;
+}
+
+describe('buildRfc822 threading headers', () => {
+  const base: DraftInput = {
+    to: [{ address: 'alice@example.com' }],
+    subject: 'Re: Test thread',
+    body: 'Reply body.',
+  };
+
+  it('sets In-Reply-To when inReplyTo is provided', async () => {
+    const buf = await buildRfc822({ ...base, inReplyTo: '<orig@example.com>' });
+    expect(parseMimeHeaders(buf)['in-reply-to']).toBe('<orig@example.com>');
+  });
+
+  it('sets References when references is provided', async () => {
+    const buf = await buildRfc822({ ...base, references: '<a@x.com> <b@x.com>' });
+    const refs = parseMimeHeaders(buf)['references'];
+    expect(refs).toContain('<a@x.com>');
+    expect(refs).toContain('<b@x.com>');
+  });
+
+  it('omits threading headers when not provided', async () => {
+    const buf = await buildRfc822(base);
+    const h = parseMimeHeaders(buf);
+    expect(h['in-reply-to']).toBeUndefined();
+    expect(h['references']).toBeUndefined();
   });
 });
