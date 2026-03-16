@@ -9,8 +9,10 @@ import { MessageService } from './services/message.service.js';
 import { MailboxService } from './services/mailbox.service.js';
 import { OrganizeService } from './services/organize.service.js';
 import { DraftService } from './services/draft.service.js';
+import { SendService } from './services/send.service.js';
 import { registerReadingTools } from './tools/reading.js';
 import { registerComposingTools } from './tools/composing.js';
+import { registerSendingTools } from './tools/sending.js';
 import { registerOrganizingTools } from './tools/organizing.js';
 import { registerMailboxTools } from './tools/mailbox.js';
 import { registerConnectionTools } from './tools/connection.js';
@@ -34,11 +36,20 @@ async function main() {
   const mailboxService = new MailboxService(pool);
   const organizeService = new OrganizeService(pool);
   const draftService = new DraftService(pool, messageService);
+  const sendService = new SendService(
+    {
+      host: config.smtp.host,
+      port: config.smtp.port,
+      auth: { user: credentials.username, pass: credentials.password },
+    },
+    messageService,
+  );
 
   const server = new McpServer({ name: 'proton-bridge-mcp', version: '0.1.0' });
 
   registerReadingTools(server, messageService);
   registerComposingTools(server, draftService);
+  registerSendingTools(server, sendService);
   registerOrganizingTools(server, organizeService);
   registerMailboxTools(server, mailboxService);
   registerConnectionTools(server, pool);
