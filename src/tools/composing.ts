@@ -57,6 +57,33 @@ export function registerComposingTools(server: McpServer, draftService: DraftSer
   );
 
   server.tool(
+    'save_reply_draft',
+    'Create a reply draft to an existing email. Automatically handles threading (In-Reply-To, References, subject prefix). Use this instead of save_draft when replying to an email.',
+    {
+      folder: z.string().describe('Folder containing the original email (e.g. "INBOX").'),
+      uid: z.number().int().describe('UID of the email being replied to.'),
+      body: z.string().describe('Plain text body of the reply.'),
+      html: z.string().optional(),
+      from: z.string().optional(),
+      cc: z.array(z.string()).optional(),
+      bcc: z.array(z.string()).optional(),
+    },
+    async ({ folder, uid, body, html, from, cc, bcc }): Promise<CallToolResult> => {
+      try {
+        await draftService.saveReplyDraft(folder, uid, body, {
+          html,
+          from: from ? { address: from } : undefined,
+          cc: cc?.map((addr) => ({ address: addr })),
+          bcc: bcc?.map((addr) => ({ address: addr })),
+        });
+        return { content: [{ type: 'text', text: JSON.stringify({ success: true }) }] };
+      } catch (err) {
+        return errorToToolResponse(err, 'save_reply_draft') as unknown as CallToolResult;
+      }
+    },
+  );
+
+  server.tool(
     'list_drafts',
     'List saved drafts with pagination.',
     {

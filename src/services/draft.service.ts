@@ -77,6 +77,48 @@ export class DraftService {
     return this.messageService.listEmails('Drafts', limit, offset);
   }
 
+  async saveReplyDraft(
+    folder: string,
+    uid: number,
+    body: string,
+    options?: {
+      html?: string;
+      cc?: { address: string; name?: string }[];
+      bcc?: { address: string; name?: string }[];
+      from?: { address: string; name?: string };
+    },
+  ): Promise<void> {
+    const headers = await this.messageService.getEmailHeaders(folder, uid);
+
+    const subject = headers.subject.startsWith('Re: ')
+      ? headers.subject
+      : `Re: ${headers.subject}`;
+
+    // Reply goes to the original sender.
+    const to = headers.from;
+
+    // Build References chain: existing references + original messageId.
+    const refParts: string[] = [];
+    if (headers.references) {
+      refParts.push(headers.references);
+    }
+    if (headers.messageId) {
+      refParts.push(headers.messageId);
+    }
+
+    await this.saveDraft({
+      to,
+      subject,
+      body,
+      html: options?.html,
+      from: options?.from,
+      cc: options?.cc,
+      bcc: options?.bcc,
+      inReplyTo: headers.messageId || undefined,
+      references: refParts.length > 0 ? refParts.join(' ') : undefined,
+    });
+  }
+
   async updateDraft(uid: number, input: DraftInput): Promise<void> {
     // Fetch the existing draft to merge fields.
     const existing = await this.messageService.getEmail('Drafts', uid, false);

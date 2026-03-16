@@ -50,6 +50,15 @@ function makeMessageService() {
       headers: {},
       attachments: [],
     }),
+    getEmailHeaders: vi.fn().mockResolvedValue({
+      subject: 'Original subject',
+      from: [{ address: 'sender@example.com', name: 'Sender' }],
+      to: [{ address: 'me@example.com' }],
+      cc: [],
+      date: '2024-01-15T10:00:00Z',
+      messageId: '<original-123@example.com>',
+      references: '<earlier@example.com>',
+    }),
   };
 }
 
@@ -112,6 +121,50 @@ describe('DraftService', () => {
     it('passes limit and offset through', async () => {
       await service.listDrafts(5, 10);
       expect(messageService.listEmails).toHaveBeenCalledWith('Drafts', 5, 10);
+    });
+  });
+
+  describe('saveReplyDraft', () => {
+    it('sets threading headers from the original email', async () => {
+      const saveSpy = vi.spyOn(service, 'saveDraft').mockResolvedValueOnce();
+      await service.saveReplyDraft('INBOX', 42, 'Thanks for your email.');
+
+      expect(messageService.getEmailHeaders).toHaveBeenCalledWith('INBOX', 42);
+      const draft = saveSpy.mock.calls[0]![0];
+      expect(draft.inReplyTo).toBe('<original-123@example.com>');
+      expect(draft.references).toBe('<earlier@example.com> <original-123@example.com>');
+    });
+
+    it('adds Re: prefix to subject', async () => {
+      const saveSpy = vi.spyOn(service, 'saveDraft').mockResolvedValueOnce();
+      await service.saveReplyDraft('INBOX', 42, 'Reply body');
+
+      expect(saveSpy.mock.calls[0]![0].subject).toBe('Re: Original subject');
+    });
+
+    it('does not double Re: prefix', async () => {
+      messageService.getEmailHeaders.mockResolvedValueOnce({
+        subject: 'Re: Already replied',
+        from: [{ address: 'sender@example.com' }],
+        to: [{ address: 'me@example.com' }],
+        cc: [],
+        date: '2024-01-15T10:00:00Z',
+        messageId: '<msg@example.com>',
+        references: undefined,
+      });
+      const saveSpy = vi.spyOn(service, 'saveDraft').mockResolvedValueOnce();
+      await service.saveReplyDraft('INBOX', 42, 'Reply body');
+
+      expect(saveSpy.mock.calls[0]![0].subject).toBe('Re: Already replied');
+    });
+
+    it('sets to field to the original sender', async () => {
+      const saveSpy = vi.spyOn(service, 'saveDraft').mockResolvedValueOnce();
+      await service.saveReplyDraft('INBOX', 42, 'Reply body');
+
+      expect(saveSpy.mock.calls[0]![0].to).toEqual([
+        { address: 'sender@example.com', name: 'Sender' },
+      ]);
     });
   });
 
