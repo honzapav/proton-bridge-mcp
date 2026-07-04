@@ -4,7 +4,7 @@ MCP server for Proton Mail via Proton Bridge. Connects AI assistants (Claude Cod
 
 ## What it does
 
-Exposes 21 MCP tools that let an AI assistant read and search your email, manage drafts, organize your inbox (move, flag, label), and manage folders and labels. Sending and deleting emails are intentionally excluded in v1 for safety.
+Exposes 24 MCP tools that let an AI assistant read and search your email, manage drafts, send emails and replies, organize your inbox (move, flag, label), and manage folders and labels. Deleting emails is intentionally excluded for safety.
 
 ## Requirements
 
@@ -15,7 +15,7 @@ Exposes 21 MCP tools that let an AI assistant read and search your email, manage
 ## Installation
 
 ```bash
-git clone https://github.com/your-org/proton-bridge-mcp.git
+git clone https://github.com/honzapav/proton-bridge-mcp.git
 cd proton-bridge-mcp
 npm install
 npm run build
@@ -153,8 +153,8 @@ The server reads each item with `security find-generic-password -s <service> -w`
 | `PROTON_BRIDGE_PASSWORD` | - | Bridge-generated IMAP password |
 | `PROTON_BRIDGE_IMAP_HOST` | `127.0.0.1` | IMAP host |
 | `PROTON_BRIDGE_IMAP_PORT` | `1143` | IMAP port |
-| `PROTON_BRIDGE_SMTP_HOST` | `127.0.0.1` | SMTP host (reserved) |
-| `PROTON_BRIDGE_SMTP_PORT` | `1025` | SMTP port (reserved) |
+| `PROTON_BRIDGE_SMTP_HOST` | `127.0.0.1` | SMTP host |
+| `PROTON_BRIDGE_SMTP_PORT` | `1025` | SMTP port |
 | `PROTON_BRIDGE_CONFIG` | `./config.json` | Path to config file |
 | `CREDENTIAL_PROVIDER` | `env` | `env`, `onepassword`, `protonpass`, or `keychain` |
 | `OP_ACCOUNT` | - | 1Password account ID or sign-in address (needed only with multiple accounts) |
@@ -221,13 +221,21 @@ Add one of the following blocks to your MCP configuration file.
 | `search_emails` | Search emails with criteria (from, to, subject, body, date range, attachment, read status). |
 | `get_unread_count` | Get unread email count for a folder. |
 
-### Composing / Drafts (3 tools)
+### Composing / Drafts (4 tools)
 
 | Tool | Description |
 |---|---|
 | `save_draft` | Save an email as a draft. Does not send. Supports aliases, CC, BCC, reply threading, and attachments. |
+| `save_reply_draft` | Create a reply draft to an existing email. Handles threading automatically (In-Reply-To, References, subject prefix). |
 | `list_drafts` | List all drafts with pagination. |
 | `update_draft` | Replace an existing draft with updated content. |
+
+### Sending (2 tools)
+
+| Tool | Description |
+|---|---|
+| `send_email` | Send a new email via SMTP. Sends immediately, does not save a draft. |
+| `send_reply` | Send a reply to an existing email via SMTP. Threading is handled automatically. Sends immediately. |
 
 ### Organizing (7 tools)
 
@@ -259,8 +267,8 @@ Add one of the following blocks to your MCP configuration file.
 
 ## Security
 
-- **No send capability in v1.** The server cannot dispatch emails on your behalf.
-- **No delete capability in v1.** Received emails and folders cannot be deleted. (`update_draft` replaces a draft in-place, which is the standard IMAP draft workflow and only affects your own in-progress drafts.)
+- **Sending is explicit.** `send_email` and `send_reply` dispatch mail immediately via SMTP — grant them to your assistant deliberately. All other composing tools only create drafts.
+- **No delete capability.** Received emails and folders cannot be deleted. (`update_draft` replaces a draft in-place, which is the standard IMAP draft workflow and only affects your own in-progress drafts.)
 - **Credentials are never logged** and never included in error messages or tool responses.
 - The Bridge password is a Bridge-generated token, not your Proton account password, limiting blast radius if it is ever exposed.
 - The self-signed TLS certificate is accepted only for connections to `127.0.0.1` (localhost).
