@@ -3,7 +3,7 @@ import fs from 'node:fs';
 
 // Schema for credential provider configuration
 const CredentialsConfigSchema = z.object({
-  provider: z.enum(['env', 'onepassword', 'protonpass']).default('env'),
+  provider: z.enum(['env', 'onepassword', 'protonpass', 'keychain']).default('env'),
   onepassword: z
     .object({
       username_ref: z.string(),
@@ -14,6 +14,13 @@ const CredentialsConfigSchema = z.object({
     .object({
       username_ref: z.string(),
       password_ref: z.string(),
+    })
+    .optional(),
+  keychain: z
+    .object({
+      username_service: z.string(),
+      password_service: z.string(),
+      account: z.string().optional(),
     })
     .optional(),
 });
@@ -133,6 +140,24 @@ function applyEnvOverrides(config: Record<string, unknown>): Record<string, unkn
       existing.password_ref = process.env.PP_PASSWORD_REF;
     }
     result.credentials.protonpass = existing;
+  }
+  if (
+    process.env.KEYCHAIN_USERNAME_SERVICE !== undefined ||
+    process.env.KEYCHAIN_PASSWORD_SERVICE !== undefined ||
+    process.env.KEYCHAIN_ACCOUNT !== undefined
+  ) {
+    result.credentials = result.credentials ?? {};
+    const existing = (result.credentials.keychain ?? {}) as Record<string, unknown>;
+    if (process.env.KEYCHAIN_USERNAME_SERVICE !== undefined) {
+      existing.username_service = process.env.KEYCHAIN_USERNAME_SERVICE;
+    }
+    if (process.env.KEYCHAIN_PASSWORD_SERVICE !== undefined) {
+      existing.password_service = process.env.KEYCHAIN_PASSWORD_SERVICE;
+    }
+    if (process.env.KEYCHAIN_ACCOUNT !== undefined) {
+      existing.account = process.env.KEYCHAIN_ACCOUNT;
+    }
+    result.credentials.keychain = existing;
   }
 
   return result;

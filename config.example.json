@@ -8,6 +8,10 @@
     "protonpass": {
       "username_ref": "proton/bridge/username",
       "password_ref": "proton/bridge/password"
+    },
+    "keychain": {
+      "username_service": "mcp.proton.email",
+      "password_service": "mcp.proton.password"
     }
   },
   "imap": {

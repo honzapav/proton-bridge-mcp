@@ -114,6 +114,37 @@ export PP_PASSWORD_REF="proton/bridge/password"
 
 Requires `pass-cli` to be installed and the `PROTON_PASS_PASSWORD` env var set.
 
+### Option 5: macOS Keychain
+
+Store the Bridge credentials as generic password items in the macOS Keychain, one item per value:
+
+```bash
+security add-generic-password -s mcp.proton.email -a proton-bridge-mcp -w "user@proton.me"
+security add-generic-password -s mcp.proton.password -a proton-bridge-mcp -w "bridge-generated-password"
+```
+
+```json
+{
+  "credentials": {
+    "provider": "keychain",
+    "keychain": {
+      "username_service": "mcp.proton.email",
+      "password_service": "mcp.proton.password"
+    }
+  }
+}
+```
+
+Or via environment variables:
+
+```bash
+export CREDENTIAL_PROVIDER=keychain
+export KEYCHAIN_USERNAME_SERVICE="mcp.proton.email"
+export KEYCHAIN_PASSWORD_SERVICE="mcp.proton.password"
+```
+
+The server reads each item with `security find-generic-password -s <service> -w`. If several items share the same service name, set `KEYCHAIN_ACCOUNT` (or `keychain.account` in the config file) to disambiguate by account name (`-a`). macOS only.
+
 ### All environment variables
 
 | Variable | Default | Description |
@@ -125,12 +156,15 @@ Requires `pass-cli` to be installed and the `PROTON_PASS_PASSWORD` env var set.
 | `PROTON_BRIDGE_SMTP_HOST` | `127.0.0.1` | SMTP host (reserved) |
 | `PROTON_BRIDGE_SMTP_PORT` | `1025` | SMTP port (reserved) |
 | `PROTON_BRIDGE_CONFIG` | `./config.json` | Path to config file |
-| `CREDENTIAL_PROVIDER` | `env` | `env`, `onepassword`, or `protonpass` |
+| `CREDENTIAL_PROVIDER` | `env` | `env`, `onepassword`, `protonpass`, or `keychain` |
 | `OP_ACCOUNT` | - | 1Password account ID or sign-in address (needed only with multiple accounts) |
 | `OP_USERNAME_REF` | - | 1Password secret reference for username |
 | `OP_PASSWORD_REF` | - | 1Password secret reference for password |
 | `PP_USERNAME_REF` | - | ProtonPass secret reference for username |
 | `PP_PASSWORD_REF` | - | ProtonPass secret reference for password |
+| `KEYCHAIN_USERNAME_SERVICE` | - | macOS Keychain service name (`-s`) of the item holding the username |
+| `KEYCHAIN_PASSWORD_SERVICE` | - | macOS Keychain service name (`-s`) of the item holding the password |
+| `KEYCHAIN_ACCOUNT` | - | macOS Keychain account name (`-a`); optional, only to disambiguate items |
 
 ## Claude Code / Claude Desktop integration
 

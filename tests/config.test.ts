@@ -17,6 +17,9 @@ const ENV_VARS = [
   'OP_PASSWORD_REF',
   'PP_USERNAME_REF',
   'PP_PASSWORD_REF',
+  'KEYCHAIN_USERNAME_SERVICE',
+  'KEYCHAIN_PASSWORD_SERVICE',
+  'KEYCHAIN_ACCOUNT',
 ];
 
 function clearEnv() {
@@ -67,6 +70,31 @@ describe('loadConfig', () => {
     expect(config.credentials.provider).toBe('onepassword');
     expect(config.credentials.onepassword?.username_ref).toBe('op://vault/item/username');
     expect(config.credentials.onepassword?.password_ref).toBe('op://vault/item/password');
+  });
+
+  it('keychain provider is configurable via env vars', () => {
+    process.env.CREDENTIAL_PROVIDER = 'keychain';
+    process.env.KEYCHAIN_USERNAME_SERVICE = 'mcp.proton.email';
+    process.env.KEYCHAIN_PASSWORD_SERVICE = 'mcp.proton.password';
+    process.env.KEYCHAIN_ACCOUNT = 'honza';
+
+    const config = loadConfig('/nonexistent/path/config.json');
+
+    expect(config.credentials.provider).toBe('keychain');
+    expect(config.credentials.keychain?.username_service).toBe('mcp.proton.email');
+    expect(config.credentials.keychain?.password_service).toBe('mcp.proton.password');
+    expect(config.credentials.keychain?.account).toBe('honza');
+  });
+
+  it('keychain account is optional', () => {
+    process.env.CREDENTIAL_PROVIDER = 'keychain';
+    process.env.KEYCHAIN_USERNAME_SERVICE = 'mcp.proton.email';
+    process.env.KEYCHAIN_PASSWORD_SERVICE = 'mcp.proton.password';
+
+    const config = loadConfig('/nonexistent/path/config.json');
+
+    expect(config.credentials.provider).toBe('keychain');
+    expect(config.credentials.keychain?.account).toBeUndefined();
   });
 
   it('env vars override config file values', () => {
