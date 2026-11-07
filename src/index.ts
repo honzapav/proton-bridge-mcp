@@ -16,6 +16,7 @@ import { registerSendingTools } from './tools/sending.js';
 import { registerOrganizingTools } from './tools/organizing.js';
 import { registerMailboxTools } from './tools/mailbox.js';
 import { registerConnectionTools } from './tools/connection.js';
+import { startHttpServer } from './http.js';
 
 async function main() {
   const config = loadConfig();
@@ -45,21 +46,29 @@ async function main() {
     messageService,
   );
 
-  const server = new McpServer({ name: 'proton-bridge-mcp', version: '0.1.0' });
-
-  registerReadingTools(server, messageService);
-  registerComposingTools(server, draftService);
-  registerSendingTools(server, sendService);
-  registerOrganizingTools(server, organizeService);
-  registerMailboxTools(server, mailboxService);
-  registerConnectionTools(server, pool);
+  const buildServer = () => {
+    const server = new McpServer({ name: 'proton-bridge-mcp', version: '0.1.0' });
+    registerReadingTools(server, messageService);
+    registerComposingTools(server, draftService);
+    if (process.env.PROTON_MCP_NO_SEND !== '1') {
+      registerSendingTools(server, sendService);
+    }
+    registerOrganizingTools(server, organizeService);
+    registerMailboxTools(server, mailboxService);
+    registerConnectionTools(server, pool);
+    return server;
+  };
 
   const shutdown = async () => { await pool.shutdown(); process.exit(0); };
   process.on('SIGINT', shutdown);
   process.on('SIGTERM', shutdown);
 
-  const transport = new StdioServerTransport();
-  await server.connect(transport);
+  if (process.env.MCP_HTTP_PORT) {
+    startHttpServer(buildServer, Number(process.env.MCP_HTTP_PORT));
+    return;
+  }
+
+  await buildServer().connect(new StdioServerTransport());
 }
 
 main().catch((err) => {

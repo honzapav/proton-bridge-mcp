@@ -6,6 +6,10 @@ MCP server for Proton Mail via Proton Bridge. Connects AI assistants (Claude Cod
 
 Exposes 24 MCP tools that let an AI assistant read and search your email, manage drafts, send emails and replies, organize your inbox (move, flag, label), and manage folders and labels. Deleting emails is intentionally excluded for safety.
 
+## HTTP mode
+
+With `MCP_HTTP_PORT` set, the server speaks stateless Streamable HTTP on `POST /mcp` instead of stdio. It has no authentication, so run it only on a private network behind an authenticating proxy. `PROTON_MCP_NO_SEND=1` leaves out `send_email` and `send_reply`.
+
 ## Requirements
 
 - Node.js 20 or later
