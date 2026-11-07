@@ -8,7 +8,7 @@ Exposes 24 MCP tools that let an AI assistant read and search your email, manage
 
 ## HTTP mode
 
-With `MCP_HTTP_PORT` set, the server speaks stateless Streamable HTTP on `POST /mcp` instead of stdio. It has no authentication, so run it only on a private network behind an authenticating proxy. `PROTON_MCP_NO_SEND=1` leaves out `send_email` and `send_reply`.
+With `MCP_HTTP_PORT` set, the server speaks stateless Streamable HTTP on `POST /mcp` instead of stdio. `MCP_HTTP_TOKEN` is required and every request must send it as a bearer token. It listens on `127.0.0.1` unless `MCP_HTTP_HOST` is set. `PROTON_MCP_NO_SEND=1` leaves out `send_email` and `send_reply`.
 
 ## Requirements
 

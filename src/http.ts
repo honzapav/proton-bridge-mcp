@@ -1,3 +1,4 @@
+import { createHash, timingSafeEqual } from 'node:crypto';
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
@@ -20,13 +21,24 @@ function fail(res: ServerResponse, status: number, message: string) {
   res.end(JSON.stringify({ jsonrpc: '2.0', error: { code: -32000, message }, id: null }));
 }
 
+const digest = (value: string) => createHash('sha256').update(value).digest();
+
+export function isAuthorized(header: string | undefined, token: string): boolean {
+  return timingSafeEqual(digest(header ?? ''), digest(`Bearer ${token}`));
+}
+
 /**
  * Stateless Streamable HTTP on POST /mcp, a fresh server and transport per
- * request. There is no authentication here: run it only behind an authenticating
- * proxy on a private network.
+ * request. Needs a bearer token and listens on loopback unless MCP_HTTP_HOST says
+ * otherwise. Requires MCP_HTTP_TOKEN, without it the server does not start.
  */
 export function startHttpServer(buildServer: () => McpServer, port: number) {
+  const token = process.env.MCP_HTTP_TOKEN;
+  if (!token) throw new Error('HTTP mode needs MCP_HTTP_TOKEN.');
+  const host = process.env.MCP_HTTP_HOST ?? '127.0.0.1';
+
   const httpServer = createServer(async (req, res) => {
+    if (!isAuthorized(req.headers.authorization, token)) return fail(res, 401, 'Unauthorized.');
     if (req.url !== '/mcp') return fail(res, 404, 'Not found.');
     if (req.method !== 'POST') return fail(res, 405, 'Method not allowed.');
     const server = buildServer();
@@ -47,6 +59,6 @@ export function startHttpServer(buildServer: () => McpServer, port: number) {
       if (!res.headersSent) fail(res, 400, 'Bad request.');
     }
   });
-  httpServer.listen(port, () => console.error(`proton-bridge-mcp listening on :${port}`));
+  httpServer.listen(port, host, () => console.error(`proton-bridge-mcp listening on ${host}:${port}`));
   return httpServer;
 }
