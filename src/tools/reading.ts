@@ -60,9 +60,9 @@ export function registerReadingTools(server: McpServer, messageService: MessageS
 
   server.tool(
     'search_emails',
-    'Search emails with criteria. Returns metadata for matching emails.',
+    "Search emails with criteria. Returns metadata for matching emails. Searches 'All Mail' by default, so archived and filed emails are included; pass a folder to narrow the search. UIDs are per folder: call get_email with the same folder you searched.",
     {
-      folder: z.string().default('INBOX'),
+      folder: z.string().default('All Mail'),
       from: z.string().optional(),
       to: z.string().optional(),
       subject: z.string().optional(),

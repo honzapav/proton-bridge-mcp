@@ -222,7 +222,7 @@ Add one of the following blocks to your MCP configuration file.
 | `list_emails` | List emails from a folder with pagination. Returns metadata only (subject, sender, date, flags). |
 | `get_email` | Get a full email by UID including body content. |
 | `get_email_headers` | Get email headers only. Lightweight alternative to `get_email`. |
-| `search_emails` | Search emails with criteria (from, to, subject, body, date range, attachment, read status). |
+| `search_emails` | Search emails with criteria (from, to, subject, body, date range, attachment, read status). Searches `All Mail` by default; UIDs belong to the searched folder, so pass the same folder to `get_email`. |
 | `get_unread_count` | Get unread email count for a folder. |
 
 ### Composing / Drafts (4 tools)
