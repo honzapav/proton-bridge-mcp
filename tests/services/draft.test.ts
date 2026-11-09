@@ -219,6 +219,17 @@ describe('DraftService', () => {
       expect(merged.references).toBe('<root@example.com> <parent@example.com>');
     });
 
+    it('keeps subject, recipients and threading when only the body is updated', async () => {
+      const saveSpy = vi.spyOn(service, 'saveDraft').mockResolvedValueOnce();
+      await service.updateDraft(1, { body: 'New body' });
+
+      const merged = saveSpy.mock.calls[0]![0];
+      expect(merged.subject).toBe('Existing draft');
+      expect(merged.to).toEqual([{ address: 'recipient@example.com' }]);
+      expect(merged.from).toEqual({ address: 'user@example.com' });
+      expect(merged.body).toBe('New body');
+    });
+
     it('uses explicit threading headers over existing ones', async () => {
       messageService.getEmail.mockResolvedValueOnce({
         uid: 1,

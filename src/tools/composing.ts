@@ -58,7 +58,7 @@ export function registerComposingTools(server: McpServer, draftService: DraftSer
 
   server.tool(
     'save_reply_draft',
-    'Create a reply draft to an existing email. Automatically handles threading (In-Reply-To, References, subject prefix). Use this instead of save_draft when replying to an email.',
+    'Create a reply draft to an existing email (sets In-Reply-To, References, subject prefix). Proton Bridge ignores these headers for drafts, so the draft does NOT appear in the conversation in Proton; only a reply sent via send_reply is threaded. To answer in a thread, show the text to the user and send it with send_reply after explicit approval.',
     {
       folder: z.string().describe('Folder containing the original email (e.g. "INBOX").'),
       uid: z.number().int().describe('UID of the email being replied to.'),
@@ -102,7 +102,7 @@ export function registerComposingTools(server: McpServer, draftService: DraftSer
 
   server.tool(
     'update_draft',
-    'Update an existing draft by UID.',
+    'Update an existing draft by UID. Omitted fields keep the current values of the draft.',
     {
       uid: z.number().int(),
       to: z.array(z.string()).optional(),
@@ -116,9 +116,10 @@ export function registerComposingTools(server: McpServer, draftService: DraftSer
     async ({ uid, to, subject, body, html, cc, bcc, attachments }): Promise<CallToolResult> => {
       try {
         const input = {
-          to: (to ?? []).map((addr) => ({ address: addr })),
-          subject: subject ?? '',
-          body: body ?? '',
+          // Omitted fields stay undefined so updateDraft keeps the existing draft's values.
+          to: to?.map((addr) => ({ address: addr })),
+          subject,
+          body,
           html,
           cc: cc?.map((addr) => ({ address: addr })),
           bcc: bcc?.map((addr) => ({ address: addr })),

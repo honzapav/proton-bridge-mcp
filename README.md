@@ -230,7 +230,7 @@ Add one of the following blocks to your MCP configuration file.
 | Tool | Description |
 |---|---|
 | `save_draft` | Save an email as a draft. Does not send. Supports aliases, CC, BCC, reply threading, and attachments. |
-| `save_reply_draft` | Create a reply draft to an existing email. Handles threading automatically (In-Reply-To, References, subject prefix). |
+| `save_reply_draft` | Create a reply draft to an existing email (In-Reply-To, References, subject prefix). Proton Bridge ignores these headers for drafts, so the draft does not appear in the Proton conversation; only a reply sent via `send_reply` is threaded. |
 | `list_drafts` | List all drafts with pagination. |
 | `update_draft` | Replace an existing draft with updated content. |
 
