@@ -119,7 +119,7 @@ export class DraftService {
     });
   }
 
-  async updateDraft(uid: number, input: DraftInput): Promise<void> {
+  async updateDraft(uid: number, input: Partial<DraftInput>): Promise<void> {
     // Fetch the existing draft to merge fields.
     const existing = await this.messageService.getEmail('Drafts', uid, false);
 
